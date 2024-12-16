@@ -21,6 +21,14 @@ public class ClientController implements Reciever {
     private TextArea chat;
     @FXML
     private TextField mensaje_escribir;
+    @FXML
+    private TextField fxml_direccion;
+    @FXML
+    private TextField fxml_puerto;
+    @FXML
+    private TextField fxml_usuario;
+    @FXML
+    private Button conectar;
 
     private CommunicationManager communicationManager;
     private String name;
@@ -29,8 +37,7 @@ public class ClientController implements Reciever {
 
     @FXML
     public void onSendButtonClick(){
-        chat.appendText(mensaje_escribir.getText());
-        name = "Pepe";
+        chat.appendText(name + ": " + mensaje_escribir.getText() + "\n");
         Message mensaje = new Message(name, mensaje_escribir.getText());
         communicationManager.send(mensaje);
     }
@@ -38,12 +45,19 @@ public class ClientController implements Reciever {
     @FXML
     public void onConnectButtonClick(){
         try {
-            host = "172.30.9.17";
-            port = 50001;
-            System.out.println("Intentando conectar a " + host + ":" + port);
-            Socket socket = new Socket(host, port);
-            communicationManager = new CommunicationManager(socket, this);
-            System.out.println("Conectado a la ip: " + socket.getInetAddress().getHostAddress() + ":" + socket.getPort());
+            host = fxml_direccion.getText();
+            if (!host.equals("localhost") || fxml_puerto.getText().equals("")){
+                chat.appendText("[ERROR]: Direccion o puertos incorrectos");
+            } else {
+                port = Integer.parseInt(fxml_puerto.getText());
+                chat.appendText("Intentando conectar a " + host + ":" + port + "\n");
+                Socket socket = new Socket(host, port);
+                communicationManager = new CommunicationManager(socket, this);
+                chat.appendText("Conectado a la ip: " + socket.getInetAddress().getHostAddress() + ":" + socket.getPort() + "\n");
+                name = fxml_usuario.getText();
+                conectar.setDisable(true);
+            }
+
         } catch (IOException e) {
             System.out.println("Error al conectar: " + e.getMessage());
             e.printStackTrace();
@@ -56,7 +70,11 @@ public class ClientController implements Reciever {
 
     @Override
     public void receive(Message message) {
-        chat.appendText(message.getText());
+        if (message != null) {
+            if (!message.getUser().equals(name)) {
+                chat.appendText(message.getUser() + ": " + message.getText() +"\n");
+            }
+        }
     }
 
     @Override
